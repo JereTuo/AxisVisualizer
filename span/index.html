@@ -1,0 +1,280 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<style>
+	body
+	{
+		background-color:transparent;
+	}
+	
+	#cluth
+	{
+		content:url("clutch.png");
+		z-index: 2;
+		position-left: 25px;
+		size: inherit;
+		object-fit: cover;
+	}
+	
+	#brake
+	{
+		content:url("brake.png");
+		z-index: 2;
+		position-left: 25px;
+		size: inherit;
+	}
+	
+	#gas
+	{
+		content:url("gas.png");
+		z-index: 2;
+		bottom: 5em;
+		size: inherit;
+		object-fit: cover;
+	}
+	
+	.button 
+	{
+		padding-top:12em;
+		z-index: 1;
+		margin-right: -2px;
+		border: 2px solid black;
+		background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=);
+		background-size: 0% 100%;
+		background-position: 0% 0%;
+		background-repeat: no-repeat;
+	}
+	</style>
+</head>
+<body>
+	<h2 id="start">Press a button on your controller to start</h2>
+</body>
+
+	<script>
+		var buttonsToFollow = [6,7,8];
+		var haveEvents = 'ongamepadconnected' in window;
+		var controllers = {};
+
+		function connectHandler(e) 
+		{
+			addGamepad(e.gamepad);
+		}
+
+		function addGamepad(gamepad) 
+		{
+			controllers[gamepad.index] = gamepad;
+
+			var controllerDiv = document.createElement("div");
+			controllerDiv.setAttribute("id", "controller" + gamepad.index);
+
+			var title = document.createElement("h1");
+			title.appendChild(document.createTextNode("gamepad: " + gamepad.id));
+			//controllerDiv.appendChild(title);
+
+			var b = document.createElement("div");
+			b.className = "buttons";
+
+			for (var i = 0; i < buttonsToFollow.length; i++) 
+			{
+				var bar = document.createElement("span");
+				bar.className = "button";
+				//bar.id = "b" + i;
+				//bar.innerHTML = buttonsToFollow[i];
+				
+				var ov = document.createElement("img");
+				
+				switch(i)
+				{
+					case(0):
+						ov.id = "cluth";
+						break;
+					case(1):
+						ov.id = "brake";
+						break;
+					case(2):
+						ov.id = "gas";
+						bar.style.paddingTop="18em";
+						break;
+					default:
+						break;
+				}
+				bar.appendChild(ov);
+				b.appendChild(bar);
+			}
+
+			controllerDiv.appendChild(b);
+
+			var startTitle = document.getElementById("start");
+			if (startTitle) 
+			{
+				start.style.display = "none";
+			}
+
+			document.body.appendChild(controllerDiv);
+			requestAnimationFrame(updateStatus);
+		}
+
+		function disconnecthandler(e) 
+		{
+			removeGamepad(e.gamepad);
+		}
+
+		function removeGamepad(gamepad) 
+		{
+			var controllerDiv = document.getElementById("controller" + gamepad.index);
+			document.body.removeChild(controllerDiv);
+			delete controllers[gamepad.index];
+		}
+
+		function updateStatus() 
+		{
+			if (!haveEvents) 
+			{
+				scanGamepads();
+			}
+
+			var i = 0;
+			var j;
+
+			for (j in controllers) 
+			{
+				var controller = controllers[j];
+				var controllerDiv = document.getElementById("controller" + j);
+
+				var buttons = controllerDiv.getElementsByClassName("button");
+				for (i = 0; i < buttons.length; i++) 
+				{
+					
+					var bar = buttons[i];
+					var val = controller.buttons[buttonsToFollow[i]];
+					var pressed = val == 1.0;
+					if (typeof(val) == "object") 
+					{
+						pressed = val.pressed;
+						val = val.value;
+					}
+					var pct = Math.round((1-val) * 100) + "%";
+					bar.style.backgroundSize = "100%" + " " + pct;
+
+					
+					////Color change
+					//bar.style.backgroundColor = "rgba(0,0,255,1)";
+					
+					//From = 212, 55, 55
+					//To = 55, 212, 60
+					
+					if(val < 0.5)
+					{
+						var start = [232,23,23];
+						var end = [232,232,23];
+						val = val/0.5;
+					}
+					else
+					{
+						var start = [232,232,23];
+						var end = [55,232,23];
+						val = (val-0.5)/0.5;
+					}
+					
+					var colr = Math.round(lerp(start[0], end[0], val));
+					var colg = Math.round(lerp(start[1], end[1], val));;
+					var colb = Math.round(lerp(start[2], end[2], val));;
+					
+					var color = "rgb(" + colr + "," + colg + ", " + colb + ")";
+					
+					bar.style.backgroundColor = color;
+					
+					//bar.className = "button";
+				}
+			}
+
+			requestAnimationFrame(updateStatus);
+		}
+
+		function lerp (start, end, amt)
+		{
+			return (1-amt)*start+amt*end
+		}
+		
+		function scanGamepads() 
+		{
+			var gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : []);
+			for (var i = 0; i < gamepads.length; i++) 
+			{
+				if (gamepads[i]) 
+				{
+				if (gamepads[i].index in controllers) 
+				{
+					controllers[gamepads[i].index] = gamepads[i];
+				}
+				else
+				{
+					addGamepad(gamepads[i]);
+				}
+				}
+			}
+		}
+		
+		window.addEventListener("gamepadconnected", connectHandler);
+		window.addEventListener("gamepaddisconnected", disconnecthandler);
+
+		if (!haveEvents) 
+		{
+		  setInterval(scanGamepads, 500);
+		}
+	</script>
+	
+	<script>
+	/*
+		var curGP;
+		window.addEventListener("gamepadconnected", function(e)
+		{
+			refreshGPList(e.gamepad.index);
+			curGP = e.gamepad;
+		})
+		window.addEventListener("gamepaddisconnected", function(e)
+		{
+			refreshGPList(e.gamepad.index);
+			isconnected = false;
+		})
+		function refreshGPList(x)
+		{
+			if(x == undefined)
+			{
+				clearConsole();
+				return;
+			}
+			
+			var gpDiv = document.getElementById("gpConsole");
+			
+			clearConsole();
+			for(var i = 0; i <= x; i++)
+			{
+				var gp = navigator.getGamepads()[x];
+				gpDiv.innerHTML += "<p>Gamepad connected at index " + gp.index + ": " + gp.id + ". It has " + gp.axes.length + " axises" + "</p>";
+			}
+		}
+		
+		function clearConsole()
+		{
+			document.getElementById("gpConsole").innerHTML = "";
+		}
+		
+		function updateAxes()
+		{
+			var gpInfo = document.getElementById("gpInfo");
+			gpInfo.innerHTML = "";
+		
+			var gp = navigator.getGamepads()[0];
+			if(gp != null)
+			{
+			for (var i = 0; i < gp.axes.length; i++)
+			{
+				gpInfo.innerHTML += "<p>" + gp.axes[i].value + "</p>";
+			}
+			}
+		}
+	
+	*/
+	</script>
+</HTML>
