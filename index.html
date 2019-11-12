@@ -4,7 +4,7 @@
 	<style>
 	body
 	{
-		background-color:transparent;
+		background-color:gray;
 	}
 	
 	#cluth
@@ -34,14 +34,17 @@
 	}
 	
 	.button 
-	{
-		padding-top:12em;
+	{	
+		
+		width: 131px;
 		z-index: 1;
-
 		background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=);
-		background-size: 0% 100%;
+		background-size: 0% 50%;
 		background-position: 0% 0%;
 		background-repeat: no-repeat;
+		position: fixed;
+		top: 0px;
+		left: 0px;
 	}
 	</style>
 </head>
@@ -75,8 +78,14 @@
 
 			for (var i = 0; i < axesToFollow.length; i++) 
 			{
-				var bar = document.createElement("span");
+				var bar = document.createElement("div");
 				bar.className = "button";
+				bar.style.left = 131 * i + "px";
+				
+				var topGap = [98,98,0]
+				
+				bar.style.top = topGap[i] + "px";
+				
 				//bar.id = "b" + i;
 				//bar.innerHTML = axesToFollow[i];
 				
@@ -86,17 +95,19 @@
 				{
 					case(0):
 						ov.id = "cluth";
+
 						break;
 					case(1):
 						ov.id = "brake";
 						break;
 					case(2):
 						ov.id = "gas";
-						bar.style.paddingTop="18em";
+						//bar.style.paddingTop="18em";
 						break;
 					default:
 						break;
 				}
+				
 				bar.appendChild(ov);
 				b.appendChild(bar);
 			}
@@ -112,7 +123,7 @@
 			// Initialize the div for our settings
 			var settings = document.createElement("div");
 			settings.className = "settings";
-			settings.style.margin-top = "10px";
+			//settings.style.margin-top = "10px";
 			
 			for(var curAxis = 0; curAxis < axesToFollow.length; curAxis++)
 			{
@@ -181,8 +192,16 @@
 					
 					val = (val + 1)/ 2;
 					
-					var pct = Math.round(val * 100) + "%";
-					bar.style.backgroundSize = "100%" + " " + pct;
+					var pct =  Math.round(val * 100) + "%";
+					
+					var sizeEnd = [204,204,302];
+					
+					var h = Math.round(lerp(1, sizeEnd[i], val)) + "px";
+					
+					bar.style.height = h;
+					
+					//bar.style.backgroundSize = "100%" + " " + pct;
+					
 					
 					////Color change
 					//bar.style.backgroundColor = "rgba(0,0,255,1)";
